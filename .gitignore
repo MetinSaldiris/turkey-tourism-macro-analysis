@@ -1,0 +1,13 @@
+# API Keys - asla commit etme
+.env
+
+# Ham veri - büyük olabilir
+data/raw/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
