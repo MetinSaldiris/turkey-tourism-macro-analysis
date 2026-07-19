@@ -4,7 +4,9 @@ requests==2.31.0
 python-dotenv==1.0.0
 fredapi==0.5.1
 pytrends==4.9.2
-eurostat==0.2.3
+# EVDS Python wrapper for the Central Bank of Türkiye API.
+# Import name = PyPI name (`evds`); see src/data_fetch.py.
+evds==0.4.0
 statsmodels==0.14.1
 matplotlib==3.8.0
 seaborn==0.13.0
@@ -12,3 +14,4 @@ plotly==5.18.0
 scipy==1.11.0
 openpyxl==3.1.2
 jupyter==1.0.0
+pytest==8.3.4
