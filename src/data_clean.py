@@ -60,12 +60,32 @@ def compute_real_fx(merged: pd.DataFrame, base_year: int = BASE_YEAR) -> pd.Data
 
 def add_shock_flags(df: pd.DataFrame) -> pd.DataFrame:
     """Binary flags: covid (2020-03..2021-06), russia_war (2022-02..),
-    mideast (2023-10..)."""
+    mideast (2023-10..).
+
+    Ayrıca dört adet 12 aylık "pulse" dummy ekler. Bir YoY (Δ_12) dönüşümü
+    altında kalıcı bir seviye kayması sadece ilk 12 ay için görünür (baz
+    etkisi tükendiğinde kaybolur); bu yüzden YoY regresyonlarında step
+    dummy değil, ilgili şoku takip eden 12 aylık pulse dummy kullanılır.
+    """
     out = df.copy()
     idx = out.index
     out["covid"] = ((idx >= "2020-03-01") & (idx <= "2021-06-01")).astype(int)
     out["russia_war"] = (idx >= "2022-02-01").astype(int)
     out["mideast"] = (idx >= "2023-10-01").astype(int)
+
+    # 12 aylık pulse dummy'leri (YoY spesifikasyonu için).
+    out["war_pulse"] = (
+        (idx >= "2022-02-01") & (idx <= "2023-01-01")
+    ).astype(int)
+    out["mideast_pulse"] = (
+        (idx >= "2023-10-01") & (idx <= "2024-09-01")
+    ).astype(int)
+    out["covid_crash_pulse"] = (
+        (idx >= "2020-03-01") & (idx <= "2021-02-01")
+    ).astype(int)
+    out["covid_rebound_pulse"] = (
+        (idx >= "2021-03-01") & (idx <= "2022-02-01")
+    ).astype(int)
     return out
 
 

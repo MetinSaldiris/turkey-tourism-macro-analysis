@@ -99,7 +99,12 @@ cells.append(nbf.v4.new_markdown_cell(
     "\n"
     "Trends regressors enter at **lag 1** (so they reflect prior-month search "
     "intent, consistent with the CCF peaks). Standard errors are HAC with "
-    "`maxlags=4` — captures up to a quarter of monthly autocorrelation."
+    "`maxlags=4` — captures up to a quarter of monthly autocorrelation.\n"
+    "\n"
+    "_Bandwidth note._ This notebook uses $\\Delta_1$ (first differences), so a "
+    "quarterly HAC bandwidth is appropriate. Notebooks 04 and 05 use $\\Delta_{12}$ "
+    "(YoY) instead: overlapping 12-month differences mechanically induce an MA(11) "
+    "error structure, so those notebooks widen HAC to `maxlags=12`."
 ))
 
 cells.append(nbf.v4.new_code_cell(
