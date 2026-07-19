@@ -220,9 +220,52 @@ cells.append(nbf.v4.new_code_cell(
 ))
 
 cells.append(nbf.v4.new_markdown_cell(
+    "## 6. Top-8 source-country market shares (2010–2025)\n"
+    "\n"
+    "Reads `data/raw/tuik_country_year.csv` (annual TÜİK arrivals by country of "
+    "origin), computes each country's share of total foreign arrivals per year, "
+    "keeps the eight countries with the largest average share over the window, "
+    "and plots a stacked area of those shares from 2010 through the latest "
+    "available year. Saved as `outputs/figures/06_country_shares.png`. If the "
+    "raw file is not present (e.g. TÜİK Excel not downloaded yet), the cell "
+    "prints a skip message instead of erroring."
+))
+cells.append(nbf.v4.new_code_cell(
+    "cy_path = ROOT / 'data' / 'raw' / 'tuik_country_year.csv'\n"
+    "if cy_path.exists():\n"
+    "    cy = pd.read_csv(cy_path)\n"
+    "    yearly_totals = cy.groupby('year')['arrivals'].sum()\n"
+    "    cy['share'] = cy.apply(lambda r: r['arrivals'] / yearly_totals[r['year']], axis=1)\n"
+    "\n"
+    "    top8 = (cy.groupby('country')['share'].mean()\n"
+    "              .sort_values(ascending=False).head(8).index.tolist())\n"
+    "    pivot = (cy[cy['country'].isin(top8)]\n"
+    "               .pivot(index='year', columns='country', values='share')\n"
+    "               .reindex(columns=top8).fillna(0)\n"
+    "               .loc[2010:])\n"
+    "\n"
+    "    fig, ax = plt.subplots(figsize=(12, 5.5))\n"
+    "    ax.stackplot(pivot.index, pivot.T.values,\n"
+    "                 labels=pivot.columns, alpha=0.90)\n"
+    "    ax.set_xlim(pivot.index.min(), pivot.index.max())\n"
+    "    ax.set_ylim(0, pivot.sum(axis=1).max() * 1.05)\n"
+    "    ax.set_xlabel('Year')\n"
+    "    ax.set_ylabel('Share of total foreign arrivals')\n"
+    "    ax.set_title('Turkey — Top 8 source-country market shares, 2010–2025')\n"
+    "    ax.legend(loc='upper left', bbox_to_anchor=(1.01, 1.00), framealpha=0.95)\n"
+    "    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0%}'))\n"
+    "    fig.tight_layout()\n"
+    "    fig.savefig(FIG_DIR / '06_country_shares.png', dpi=150, bbox_inches='tight')\n"
+    "    plt.show()\n"
+    "else:\n"
+    "    print('tuik_country_year.csv not present, skipping (rerun data_fetch after '\n"
+    "          'placing data/raw/tuik_turizm.xlsx)')"
+))
+
+cells.append(nbf.v4.new_markdown_cell(
     "## Next\n"
     "\n"
-    "All five figures saved under `outputs/figures/`. From here, the demand-model phase "
+    "All figures saved under `outputs/figures/`. From here, the demand-model phase "
     "can proceed: build per-source-country regressions (or a panel) with arrivals as the "
     "dependent variable and real FX + Trends + shock flags as regressors."
 ))
