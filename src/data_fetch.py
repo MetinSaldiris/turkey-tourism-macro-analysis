@@ -66,8 +66,16 @@ def fetch_all_evds() -> pd.DataFrame:
 # ─────────────────────────────────────────
 
 FRED_SERIES = {
-    "DE_TUFE": "DEUCPIALLMINMEI",
+    # DE: Eurostat HICP, aylık endeks (base = Index 2025=100). compute_real_fx
+    # 2015 = 100'e yeniden bazladığı için baz-yıl farkı sorun değil. Bu seri
+    # OECD MEI'nin (DEUCPIALLMINMEI, 2025-03'te durdu) yerini alıyor.
+    "DE_TUFE": "CP0000DEM086NEST",
+    # GB: OECD MEI aylık endeksi (Index 2015=100). FRED üzerinde ONS kaynaklı,
+    # halihazırda güncel bir aylık UK CPI ENDEKSİ serisi bulunamadığı için bu
+    # seride kalıyoruz; yayın 2025-03'te durduğundan real_GBP_TRY o tarihte
+    # kesiliyor. Bu limitasyon README/Limitations'da belgelendi.
     "GB_TUFE": "GBRCPIALLMINMEI",
+    # US: BLS CPI-U all items, aylık endeks (Index 1982-84=100). Güncel.
     "US_TUFE": "CPIAUCSL",
     # OECD discontinued Russian data after 2022-03 (sanctions); series ends there.
     "RU_TUFE": "RUSCPIALLMINMEI",
