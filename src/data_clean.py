@@ -3,7 +3,7 @@ data_clean.py
 Phase 2 — Build the unified monthly master dataset.
 
 Loads the five raw CSVs produced by data_fetch.py, aligns them on a monthly
-DatetimeIndex spanning 2010-01 through 2025-10, computes real exchange rates
+DatetimeIndex spanning 2010-01 through 2026-06, computes real exchange rates
 (2015=100), tags shock periods, and writes data/processed/master_monthly.csv.
 """
 
@@ -13,7 +13,7 @@ import pandas as pd
 RAW_DIR = "data/raw"
 PROCESSED_DIR = "data/processed"
 INDEX_START = "2010-01-01"
-INDEX_END = "2025-10-01"
+INDEX_END = "2026-06-01"
 BASE_YEAR = 2015
 
 # nominal TRY rate ↔ foreign-country CPI used to deflate it

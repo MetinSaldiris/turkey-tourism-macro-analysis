@@ -16,10 +16,10 @@ EVDS_KEY = os.getenv("EVDS_API_KEY")
 FRED_KEY  = os.getenv("FRED_API_KEY")
 
 START_DATE = "01-01-2010"
-END_DATE   = "31-10-2025"
+END_DATE   = "30-06-2026"
 FRED_START = "2010-01-01"
-FRED_END   = "2025-10-31"
-TRENDS_TIMEFRAME = "2010-01-01 2025-10-31"
+FRED_END   = "2026-06-30"
+TRENDS_TIMEFRAME = "2010-01-01 2026-06-30"
 
 # ─────────────────────────────────────────
 # 1. EVDS — Kur Serileri & TR TÜFE
