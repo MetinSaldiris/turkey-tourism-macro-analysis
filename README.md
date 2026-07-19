@@ -1,38 +1,46 @@
-# Turkey Tourism Demand — A Macro Analysis
+# Turkey Tourism Demand: A Macro Analysis
 
 This project tries to answer a simple question: what actually moves the number of foreign tourists who come to Turkey each month? Exchange rates? Google searches? Geopolitical shocks? I pulled monthly data from four sources back to 2010 and ran the analysis to find out.
 
-The question matters because tourism is one of the largest sources of foreign currency for Turkey. Every percentage point of real depreciation against the euro is worth real money if it really does pull more visitors in. The headline result, with the caveats spelled out below, is that the effect is there but smaller and noisier than the textbook picture suggests.
+The question matters because tourism is one of the largest sources of foreign currency for Turkey. Every percentage point of real depreciation against the euro is worth real money if it really does pull more visitors in. The headline result, with the caveats spelled out below, is that once the specification is tightened (correct HAC bandwidth for YoY, deseasonalised Trends regressors, pulse dummies for the shocks), the FX effect is directionally positive but no longer statistically significant at conventional levels; the strongest surviving demand signal is a UK-Trends elasticity.
 
 ## Data sources
 
-- **EVDS** (Central Bank of Türkiye) — monthly TRY exchange rates against EUR, GBP, USD, RUB, and the Turkish CPI.
-- **FRED** (St. Louis Fed) — monthly CPI for Germany, the UK, the US, and Russia, drawn from the OECD MEI series.
-- **Google Trends** — monthly search-intent indices for Turkish-tourism keywords across DE, GB, SA, AE, and RU.
-- **TÜİK** (Turkish Statistical Institute) — monthly arrivals totals and annual arrivals broken down by country of origin, parsed from the official Excel workbook.
+- **EVDS** (Central Bank of Türkiye): monthly TRY exchange rates against EUR, GBP, USD, RUB, and the Turkish CPI.
+- **FRED** (St. Louis Fed): monthly CPI indices for Germany (Eurostat HICP), the UK, the US, and Russia.
+- **Google Trends**: monthly search-intent indices for Turkish-tourism keywords across DE, GB, SA, AE, RU.
+- **TÜİK** (Turkish Statistical Institute): monthly arrivals totals and annual arrivals broken down by country of origin, parsed from the official Excel workbook.
 
 ## Project structure
 
 ```
 turkey-tourism-macro-analysis/
 ├── src/
-│   ├── data_fetch.py        # phase 1 — pull from all four sources
-│   └── data_clean.py        # phase 2 — build the unified monthly master CSV
+│   ├── data_fetch.py        # phase 1, pull from all four sources
+│   └── data_clean.py        # phase 2, build the unified monthly master CSV
 ├── notebooks/
-│   ├── 01_eda.ipynb              # plots: arrivals, FX, Trends, correlations
-│   ├── 02_lag_analysis.ipynb     # cross-correlation functions by market
+│   ├── 01_eda.ipynb              # plots: arrivals, FX, Trends, correlations, country shares
+│   ├── 02_lag_analysis.ipynb     # cross-correlation functions by market (raw and YoY, RU pre/post split)
 │   ├── 03_regression.ipynb       # OLS in first differences
-│   ├── 04_regression_yoy.ipynb   # OLS in YoY log changes
-│   └── 05_collinearity_diag.ipynb # why EUR and GBP can't both be in the model
+│   ├── 04_regression_yoy.ipynb   # OLS in YoY log changes, KPSS cross-check, ex-COVID robustness
+│   └── 05_collinearity_diag.ipynb # why EUR and GBP cannot both be in the model
+├── tests/
+│   └── test_parsers.py      # unit tests for the TÜİK Excel parser helpers
 ├── data/
-│   ├── raw/                 # pulled from APIs / TÜİK Excel (gitignored)
+│   ├── raw/                 # pulled from APIs and TÜİK Excel (gitignored)
 │   └── processed/
 │       └── master_monthly.csv   # joined monthly panel, 2010-01 to 2025-10
 ├── outputs/
 │   ├── figures/             # all notebook plots, saved as PNG
-│   └── lag_summary.csv      # peak-correlation table from notebook 02
+│   ├── lag_summary.csv      # peak-correlation table from notebook 02 (raw and YoY variants)
+│   └── portfolio_article.md
+├── LICENSE
 └── requirements.txt
 ```
+
+### Repository layout notes
+
+The five notebooks under `notebooks/` are build artefacts, not source. Each one is generated programmatically by its matching `_build_*.py` script (via `nbformat`); the notebooks are then executed with `jupyter nbconvert --execute --inplace`. To change a notebook, edit the `_build_*.py` script and re-run it, then re-execute the notebook. Do not edit the `.ipynb` files directly, changes there are overwritten on the next build.
 
 ## How to run it
 
@@ -49,7 +57,7 @@ turkey-tourism-macro-analysis/
     # edit .env and fill in EVDS_API_KEY and FRED_API_KEY
     ```
 
-3. Drop the TÜİK workbook at `data/raw/tuik_turizm.xlsx`. The file isn't redistributed here; you can download it from the TÜİK tourism statistics page.
+3. Drop the TÜİK workbook at `data/raw/tuik_turizm.xlsx`. The file is not redistributed here; you can download it from the TÜİK tourism statistics page.
 
 4. Pull the raw data. The Google Trends step takes about five minutes because of the rate-limit handling.
 
@@ -73,24 +81,38 @@ turkey-tourism-macro-analysis/
     jupyter nbconvert --to notebook --execute --inplace notebooks/05_collinearity_diag.ipynb
     ```
 
+7. Run the parser tests.
+
+    ```bash
+    python -m pytest
+    ```
+
 ## What I found
+
+All numbers below come from executing `notebooks/04_regression_yoy.ipynb` and `notebooks/05_collinearity_diag.ipynb` on the committed `data/processed/master_monthly.csv`. YoY sample: 2017-01 to 2025-03, N = 99. Standard errors are Newey-West HAC with maxlags = 12 (the Delta-12 transform mechanically induces an MA(11) error structure from overlapping differences, so the HAC bandwidth must be at least 11).
 
 - **Arrivals follow a strong seasonal pattern.** July and August are roughly five to six times bigger than January and February. The shape is so dominant that the first thing any model has to do is take it out, or every result will just be a story about summer.
 
-- **Google Trends leads arrivals by one month.** The cross-correlation peaks at lag +1 for both Germany (ρ = 0.51) and the UK (ρ = 0.69). When German or British search interest in Turkish holidays jumps, arrivals follow about a month later. That fits with how people actually book trips.
+- **The raw-CCF claim that Trends leads arrivals by one month is a seasonality artefact.** On the raw series, DE Trends peaks at lag +1 with rho = +0.509 and GB Trends at lag +1 with rho = +0.691 (N = 118). On the deseasonalised YoY-CCF, that lead structure does not survive: DE peaks at lag -6 with rho = +0.622 and GB peaks at lag 0 with rho = +0.459 (N = 106); the correlation at lag +1 on the YoY-DE panel is only +0.292. Once the shared summer cycle is removed, Trends does not cleanly lead arrivals by one month for DE or GB. Figure: `outputs/figures/lag_yoy_ccf.png`.
 
-- **A 1% real TRY depreciation is associated with roughly +2% more arrivals year-on-year.** This is the elasticity I get from the YoY-log specification once the collinear EUR / GBP pair is replaced with a single regressor. The effect points in the textbook direction but it sits right at the edge of statistical significance (p ≈ 0.05–0.13). The signal is real, just not as loud as it would need to be to drive policy.
+- **The one-percent-real-depreciation-buys-two-percent-more-arrivals claim does not survive tighter inference.** In the preferred YoY OLS (no month-FE, higher adjusted R2), the real-EUR/TRY coefficient is beta = +2.05 with p = 0.083 and a 95 percent confidence interval of [-0.27, +4.37]. The point estimate points in the textbook direction, but the interval straddles zero, so the effect is not statistically significant at 5 percent. Dropping the COVID window (2020-03 through 2022-02) flips the sign entirely: beta = -0.59 with p = 0.163 on N = 75. The full-sample headline is COVID-window dependent, not a robust structural elasticity.
 
-- **The Russia–Ukraine war pushed Russian arrivals structurally higher.** The CCF for the Russian search-intent keyword peaks at lag −4 with ρ = −0.47 — Russian searches for Turkish holidays fell at the same time Russian arrivals to Turkey *rose*. The most plausible reading is relocations and alternative travel routes after sanctions: arrivals stopped being driven by vacation search and started being driven by people moving.
+- **UK YoY Trends is the strongest surviving demand signal.** In the same base spec, YoY-log GB search intent at lag 1 has beta = +0.848 with p = 0.022 and a 95 percent CI of [+0.125, +1.571]; it is the only individually significant regressor other than the two COVID pulses. The DE-Trends coefficient is borderline (beta = -0.461, p = 0.054); its sign flips positive (beta = +0.28, p = 0.004) once the COVID window is dropped, which strongly suggests the DE result is confounded by the pandemic. On the specification-picked collinearity diagnostic, the picture is the same: after replacing the collinear EUR/GBP pair with a single regressor, the FX coefficient is around +0.7 to +0.8 with p between 0.09 and 0.18 (EUR-only spec: beta = +0.831, p = 0.094; GBP-only: beta = +0.697, p = 0.184; average of EUR/GBP: beta = +0.787, p = 0.132). None clear 5 percent.
 
-- **EUR and GBP real exchange rates can't both be in the model.** Their YoY correlation is 0.864 and their VIFs in the joint regression are both above 12. When you put them in together, EUR comes out with the wrong sign and GBP soaks up all the elasticity. Once you isolate either one, both behave properly. This is a textbook collinearity story, and a useful reminder to look at condition numbers before reading coefficients.
+- **The Russia-Ukraine war shows up as a clean structural break in Russian tourism dynamics.** The raw RU CCF splits sharply at 2022-02: pre-war (N = 73) it peaks at lag +1 with rho = +0.721 (Russian search intent leads arrivals in the holiday regime), post-war (N = 45) it peaks at lag -5 with rho = -0.727 (arrivals rise while search falls). The sign reversal between sub-periods is the break itself. The most plausible reading is that post-February 2022 Russian flows to Turkey stopped being vacation traffic and started being relocations, decoupling from search intent. Figure: `outputs/figures/lag_RU_split_ccf.png`.
+
+- **EUR and GBP real exchange rates cannot both be in the model.** Their YoY correlation is 0.864 and their VIFs in the joint regression are 14.97 (EUR) and 15.80 (GBP), well past the textbook threshold. In the joint spec EUR comes out wrong-signed (beta = -1.34, p = 0.29) and GBP soaks up part of the elasticity (beta = -1.34 as well after the tighter specification). Isolating either currency lowers the condition number from around 45 to around 10 and returns a positive but insignificant FX coefficient, exactly the collinearity pattern.
 
 ## Limitations
 
-- **Russian CPI ends in March 2022.** The OECD stopped publishing it after the sanctions, and FRED doesn't have a successor monthly series. Anything involving real RUB/TRY effectively stops there.
+- **Russian CPI ends in March 2022.** OECD stopped publishing after sanctions and FRED has no successor monthly series. Anything involving real RUB/TRY effectively stops there.
 
-- **TÜİK monthly data only goes back to 2016.** The country-by-year sheet covers 2010–2025, but the monthly totals only start in 2016. That's the binding constraint on every monthly model and limits the post-COVID sample to about 100 observations.
+- **UK CPI ends in March 2025.** The FRED-hosted OECD MEI series `GBRCPIALLMINMEI` was discontinued at 2025-03; FRED has no ONS-sourced monthly UK CPI **index** series that is currently updated (the Eurostat companion for the UK stops at 2020-11 because of Brexit). Rather than silently switching to a rate series that would break the real-FX construction, the pipeline keeps the OECD MEI series and accepts that `real_GBP_TRY` is truncated at 2025-03. Effective YoY regression sample ends 2025-03 (N = 99). The DE series was migrated to Eurostat HICP (`CP0000DEM086NEST`), which is currently updated and monthly.
 
-- **Aggregate arrivals hide country-level variation.** I'm regressing total foreign arrivals on a small set of macros, which means I'm averaging over 240-odd source countries. The natural next step would be a country-level panel that uses the per-country FX and CPI for each origin.
+- **TÜİK monthly arrivals only go back to 2016.** The country-by-year sheet covers 2010 to 2025, but the monthly totals start in 2016. That is the binding constraint on every monthly model and limits the post-COVID YoY sample to 99 observations.
 
-- **The model still has dynamics it isn't capturing.** Durbin–Watson sits around 0.5 across every specification I tried. The Newey–West standard errors absorb that into the inference, but the residuals are still telling me a richer spec (an AR term, a lagged dependent, or distributed FX lags) would be worth fitting.
+- **Aggregate arrivals hide country-level variation.** I am regressing total foreign arrivals on a small set of macros, which averages over 240-odd source countries. The natural next step is a country-level panel that uses the per-country FX and CPI for each origin.
+
+- **Residual autocorrelation and stationarity nuance.** Durbin-Watson sits around 0.9 to 1.2 across specifications; a richer dynamic spec (an AR term or a lagged dependent variable) would tighten inference. ADF and KPSS disagree on the YoY real-EUR/TRY series (ADF does not reject a unit root at p = 0.25, KPSS does not reject stationarity at p = 0.10). The two-test verdict, given ADF's known low power on samples around 100 observations, is that the series is stationary, but inference on the FX coefficient should be read as fragile.
+
+- **Google Trends is not bit-reproducible.** Trends indices are re-scaled per API request against the queried window, so re-running `data_fetch.py` produces different index values every time. `data/processed/master_monthly.csv` is therefore not a deterministic output of the pipeline; the committed CSV is the analysis dataset of record and every number in this README and in `outputs/portfolio_article.md` is tied to that snapshot.
