@@ -1,10 +1,10 @@
 market,regressor,column,transform,n_overlap,peak_lag,rho_peak,conf_95,significant
-DE,Trends,trends_DE_Türkei_Urlaub,raw,118,1,0.509,0.181,True
-DE,real FX,real_EUR_TRY,raw,111,0,0.253,0.186,True
-GB,Trends,trends_GB_Turkey_holiday,raw,118,1,0.691,0.181,True
+DE,Trends,trends_DE_Türkei_Urlaub,raw,118,1,0.508,0.181,True
+DE,real FX,real_EUR_TRY,raw,118,0,0.289,0.18,True
+GB,Trends,trends_GB_Turkey_holiday,raw,118,1,0.702,0.181,True
 GB,real FX,real_GBP_TRY,raw,111,1,0.27,0.187,True
-RU,Trends,trends_RU_Турция_отдых,raw,118,-4,-0.472,0.184,True
+RU,Trends,trends_RU_Турция_отдых,raw,118,-4,-0.463,0.184,True
 RU,real FX,real_RUB_TRY,raw,75,6,-0.123,0.236,False
-DE,Trends,trends_DE_Türkei_Urlaub,yoy,106,-6,0.622,0.196,True
-GB,Trends,trends_GB_Turkey_holiday,yoy,106,0,0.459,0.19,True
-RU,Trends,trends_RU_Турция_отдых,yoy,106,0,0.47,0.19,True
+DE,Trends,trends_DE_Türkei_Urlaub,yoy,106,-6,0.619,0.196,True
+GB,Trends,trends_GB_Turkey_holiday,yoy,106,0,0.462,0.19,True
+RU,Trends,trends_RU_Турция_отдых,yoy,106,0,0.463,0.19,True
